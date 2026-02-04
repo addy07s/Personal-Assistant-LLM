@@ -3,14 +3,23 @@ const { Pinecone } = require('@pinecone-database/pinecone');
 const PINECONE_API_KEY = process.env.PINECONE_API_KEY;
 const PINECONE_INDEX_NAME = process.env.PINECONE_INDEX_NAME;
 
-if (!PINECONE_API_KEY) {
-  // eslint-disable-next-line no-console
-  console.warn('PINECONE_API_KEY is not set. Pinecone operations will fail until it is configured.');
-}
+let pinecone = null;
 
-const pinecone = new Pinecone({
-  apiKey: PINECONE_API_KEY || '',
-});
+function getPineconeClient() {
+  if (!PINECONE_API_KEY) {
+    throw new Error(
+      'PINECONE_API_KEY is not set. Please configure it in backend/.env to use Pinecone features.'
+    );
+  }
+
+  if (!pinecone) {
+    pinecone = new Pinecone({
+      apiKey: PINECONE_API_KEY,
+    });
+  }
+
+  return pinecone;
+}
 
 function getIndex() {
   if (!PINECONE_INDEX_NAME) {
@@ -18,7 +27,8 @@ function getIndex() {
   }
 
   try {
-    return pinecone.index(PINECONE_INDEX_NAME);
+    const client = getPineconeClient();
+    return client.index(PINECONE_INDEX_NAME);
   } catch (error) {
     throw new Error(`Failed to initialize Pinecone index: ${error.message || error}`);
   }
